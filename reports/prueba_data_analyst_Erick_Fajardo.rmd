@@ -1,0 +1,104 @@
+---
+title: "Ejercicio Cuantitativo - Barómetro de las Américas"
+author: "Erick Fajardo"
+date: "2023-09-25"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Librerías
+library(tidyverse)
+library(gt)
+
+# Lectura
+ab_raw <- haven::read_dta(here::here("./data/raw/Merged_LAPOP_AmericasBarometer_2021_v1.2_w.dta"))
+
+# Limpieza
+ab_clean <- ab_raw %>%
+  filter(pais %in% c(1, 2, 3, 4, 5)) %>%
+  select(# Muestra
+         uniq_id, estratopri, strata, upm, wt, weight1500,
+         # Demográficos
+         pais, year, nationality, edad = q2, genero = q1tb, niv_educ = edr, edo_civil = q11n, etnia = etid, ocup = ocup4a, ingreso = q10newt, 
+         
+         # Seguridad alimentaria, covid, seguridad
+         prob_grave = a4, preocup_covid = covid2at, sit_eco_peor12 = idio2, sit_eco_peor12_porCov = idio2cov, sin_alimen3 = fs2, sin_alimen3_porCov = fs2covidn, barrio_confiable = it1,  
+  
+         # Político
+         golpe_estado_jus = jc13, cierre_congreso = jc15a, delic12 = vic1ext, pref_ingBas_noElec = chm1bn, pref_ing_noExp = chm2bn, b_resp_instPub = b2, b_derBasProt_SisPol = b3, b_orgVivir_SisPol = b4, b_quePunApoy_SisPol = b6, b_quePunConf_Elecc = b47a, eval_trabPresi = m1, conf_EUA = mil10e,
+         
+         # Economía
+         infl_EUA_econ = ccus1,
+         
+         # Desastres Naturales
+         pais_expDesN = drk1c, famHerido_DesN = drk1n, famAfec_DesN = drr1,
+         
+         # MIGRACIÓN
+         intViv_otroPais3 = q14, que_pais = q14d, razonViv_otroPais = q14mota, medi_migrar_ahorro = q14pa_1, medi_migrar_pasap = q14pa_2, medi_migrar_arrViaj = q14pa_3, medi_migrar_fechViaj = q14pa_4,  medi_migrar_hablar = q14pa_5, medi_migrar_ninguna = q14pa_0, amigFam_EUA = q10cus, res5 = mig2, res5_tipo = mig3)
+```
+
+## Contexto
+
+[**Insertar breve resumen del barómetro**]
+
+El Barómetro de las Américas (BA de aquí en adelante) de LAPOP es una encuesta aplicada a todos los países independientes de Norte, Centro y Sudamérica, así como a la mayoría de países en el Caribe. El objetivo del BA es medir valores, comportamientos y condiciones socio-económicas en las Américas.
+
+La última ronda fue llevada a cabo en el año 2021, donde se realizaron `r nrow(ab_raw)` entrevistas en `r length(unique(ab_raw$pais))` países. Es importante destacar, que de acuerdo con la ficha técnica 2021, las muestras de cada país son probabilísticas,  representativas a nivel nacional y son respondidas por adultos en edad de votar [citar lapop]. Además, su estandarización permite comparaciones válidas entre países y a través del tiempo.
+
+## Diseño de la muestra
+
+- Universo: Todos los adultos en edad de votar, dentro de los países seleccionados en el año 2021.
+- Población: Muestra representativa de participantes en edad de votar.
+- Unidad de observación: Individuo.
+
+- Diseño muestral: Random-Digit Dialing
+- Marco muestral: Listado de todos los números telefónicos disponibles en el país.
+- Unidad de selección: Número de teléfono.
+
+- Pesos: Al realizar comparaciones entre países, LAPOP repondera cada conjunto de datos de cada país en el conjunto de datos "merged", dejando a cada país con una cantidad de 1500 observaciones. La variable de pesos para realizar esta comparación se llama "weight1500". [Revisar cómo se hace svsvysetyset upm [pw=weight1500], strata(strata) en R]
+
+## Historia
+
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+# Librerías
+library(tidyverse)
+library(gt)
+
+# Lectura
+ab_raw <- haven::read_dta(here::here("./data/raw/Merged_LAPOP_AmericasBarometer_2021_v1.2_w.dta"))
+
+# Limpieza
+ab_clean <- ab_raw %>%
+  filter(pais %in% c(1, 2, 3, 4, 5)) %>%
+  select(# Muestra
+         uniq_id, estratopri, strata, upm, wt, weight1500,
+         # Demográficos
+         pais, year, nationality, edad = q2, genero = q1tb, niv_educ = edr, edo_civil = q11n, etnia = etid, ocup = ocup4a, ingreso = q10newt, 
+         
+         # Seguridad alimentaria, covid, seguridad
+         prob_grave = a4, preocup_covid = covid2at, sit_eco_peor12 = idio2, sit_eco_peor12_porCov = idio2cov, sin_alimen3 = fs2, sin_alimen3_porCov = fs2covidn, barrio_confiable = it1,  
+  
+         # Político
+         golpe_estado_jus = jc13, cierre_congreso = jc15a, delic12 = vic1ext, pref_ingBas_noElec = chm1bn, pref_ing_noExp = chm2bn, b_resp_instPub = b2, b_derBasProt_SisPol = b3, b_orgVivir_SisPol = b4, b_quePunApoy_SisPol = b6, b_quePunConf_Elecc = b47a, eval_trabPresi = m1, conf_EUA = mil10e,
+         
+         # Economía
+         infl_EUA_econ = ccus1,
+         
+         # Desastres Naturales
+         pais_expDesN = drk1c, famHerido_DesN = drk1n, famAfec_DesN = drr1,
+         
+         # MIGRACIÓN
+         intViv_otroPais3 = q14, que_pais = q14d, razonViv_otroPais = q14mota, medi_migrar_ahorro = q14pa_1, medi_migrar_pasap = q14pa_2, medi_migrar_arrViaj = q14pa_3, medi_migrar_fechViaj = q14pa_4,  medi_migrar_hablar = q14pa_5, medi_migrar_ninguna = q14pa_0, amigFam_EUA = q10cus, res5 = mig2, res5_tipo = mig3)
+```
+
+```{r miniEDA}
+ab_clean %>%
+  group_by(pais, intViv_otroPais3) %>%
+  summarise(freq = n(),
+            prop = n()/sum(n()))
+```
+
+
+
